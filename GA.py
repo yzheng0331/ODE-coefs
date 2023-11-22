@@ -10,11 +10,12 @@ import io
 import pstats
 import memory_profiler
 from utils import objective
+from synthetic_data import objective_syn
 import pandas as pd
 
 # Systematic study ??
 
-def ga_search(NGEN):
+def ga_search(NGEN, synthetic = False):
     alpha1 = 0.1
     Average = 0
     Std = 3
@@ -50,7 +51,10 @@ def ga_search(NGEN):
     toolbox.register("mutate", tools.mutGaussian, mu=Average, sigma=Std, indpb=Mut_p)
 
     # Evaluation Function
-    toolbox.register("evaluate", objective)
+    if not synthetic: 
+        toolbox.register("evaluate", objective)
+    else:
+        toolbox.register("evaluate", objective_syn)
 
     toolbox.register("select", tools.selTournament, tournsize=3)
 
@@ -74,22 +78,22 @@ def ga_search(NGEN):
     top10 = tools.selBest(pop, k=10)
     return top10
 
-def ga(num_trials = 1, num_gen = 1):
+def ga(num_trials = 1, num_gen = 1, synthetic = False):
     df_list = []
     for i in tqdm(range(num_trials)):
-        top = ga_search(num_gen)
+        top = ga_search(num_gen, synthetic)
         df_top = pd.DataFrame(top, columns = ['c1', 'c2', 'c3', 'c4', 'k31', 'k41', 'k51'])
         df_top['num_trial'] = i
         df_list.append(df_top)
     final_df = pd.concat(df_list, axis=0, ignore_index=True)
-    final_df.to_csv("ga.csv", index=False)
+    final_df.to_csv("ga_syn.csv", index=False)
 
 
 # profiler = cProfile.Profile()
 
 # profiler.enable()
 
-ga(num_trials = 30, num_gen = 60)
+ga(num_trials = 30, num_gen = 60, synthetic=True)
 
 # profiler.disable()
 # s = io.StringIO()
