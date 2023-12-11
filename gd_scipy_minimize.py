@@ -44,7 +44,7 @@ experimental_data_blue = loaded_data.get('blue', [])
 
 
 # Minimize the cost function using gradient descent
-result = minimize(cost_function, initial_params, args=(t, experimental_data_NIR, experimental_data_blue, x, P980), method='BFGS', jac=gradient_cost)
+result = minimize(cost_function, initial_params, args=(t, experimental_data_NIR, experimental_data_blue, conc, P980), method='BFGS', jac=gradient_cost)
 
 # Extract optimized parameters
 optimized_params = result.x
