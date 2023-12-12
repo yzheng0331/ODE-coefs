@@ -46,6 +46,8 @@ def gradient_descent(params, learning_rate, iterations, x, P980s):
         params -= learning_rate * grad
 
         costs.append(cost_function)
+    
+    return params, costs
 
 
 
