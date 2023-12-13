@@ -27,7 +27,7 @@ def cost_function(params, x, P980s):
         cost_blue = (blue - exp_blue)**2
         cost += cost_blue    
 
-    return cost
+    return cost / 1000
 
 def gradient_descent(params, learning_rate, iterations, x, P980s):
     costs = []
@@ -40,15 +40,17 @@ def gradient_descent(params, learning_rate, iterations, x, P980s):
             params_minus = params.copy()
             params_plus[i] += epsilon
             params_minus[i] -= epsilon
+            # print(cost_function(params_plus, x, P980s))
+            # print((cost_function(params_plus, x, P980s) - cost_function(params_minus, x, P980s)) / (2 * epsilon))
             grad[i] = (cost_function(params_plus, x, P980s) -
                        cost_function(params_minus, x, P980s)) / (2 * epsilon)
 
         params -= learning_rate * grad
 
+        current_cost = cost_function(params, x, P980s)
         costs.append(cost_function)
     
     return params, costs
-
 
 
 conc = 10 ## Something to change
@@ -56,9 +58,16 @@ conc = 10 ## Something to change
 initial_params = [3, -1, 0, 3, 0, 2, 0] ## Something to change
 
 learning_rate = 0.01 ## Something to change
-iterations = 100 ## Something to change
+iterations = 1000 ## Something to change
 P980s = power[conc]
 optimized_params, costs = gradient_descent(initial_params, learning_rate, iterations, conc, P980s)
+
+print(optimized_params)
+print(costs)
+output = {'optimized_params': optimized_params, 'costs': costs}
+json_data = json.dumps(syn)
+with open(f'./GD/results_{conc}.json', 'w') as f:
+    f.write(json_data)
 
 plt.plot(range(iterations), costs)
 plt.xlabel('Epoch')
