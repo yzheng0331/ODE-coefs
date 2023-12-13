@@ -27,7 +27,7 @@ def cost_function(params, x, P980s):
         cost_blue = (blue - exp_blue)**2
         cost += cost_blue    
 
-    return cost / 1000
+    return cost / 10000
 
 def gradient_descent(params, learning_rate, iterations, x, P980s):
     costs = []
@@ -44,11 +44,12 @@ def gradient_descent(params, learning_rate, iterations, x, P980s):
             # print((cost_function(params_plus, x, P980s) - cost_function(params_minus, x, P980s)) / (2 * epsilon))
             grad[i] = (cost_function(params_plus, x, P980s) -
                        cost_function(params_minus, x, P980s)) / (2 * epsilon)
+        # print(epoch)
 
         params -= learning_rate * grad
 
         current_cost = cost_function(params, x, P980s)
-        costs.append(cost_function)
+        costs.append(current_cost)
     
     return params, costs
 
@@ -65,9 +66,9 @@ optimized_params, costs = gradient_descent(initial_params, learning_rate, iterat
 print(optimized_params)
 print(costs)
 output = {'optimized_params': optimized_params, 'costs': costs}
-json_data = json.dumps(syn)
+json_data = json.dumps(output)
 with open(f'./GD/results_{conc}.json', 'w') as f:
-    f.write(json_data)
+    f.write(json_data) # TypeError: Object of type ndarray is not JSON serializable
 
 plt.plot(range(iterations), costs)
 plt.xlabel('Epoch')
