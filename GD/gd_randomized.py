@@ -56,7 +56,7 @@ def cost_randomized(params, x, P980s, coin):
             cost_blue = (blue - exp_blue)**2
             cost += cost_blue
 
-    return cost / 500
+    return cost / 2000
 
 # grad[i] = grad_randomized(params_plus, params_minus, x, P980, epsilon)
 def grad_randomized(x_plus, x_minus, x, P980s, epsilon):
@@ -101,7 +101,7 @@ def gradient_descent_rand(params, learning_rate, iterations, x, P980s):
 
     for epoch in tqdm(range(iterations)):
         grad = np.zeros_like(params)
-        epsilon = 1e-2 # something to change
+        epsilon = 1e-2 # something to change 
         
         rand = random.uniform(0, 1)
         thre = 1/2
@@ -181,7 +181,7 @@ initial_params = [2, -1, 0, 2, 0, 2, 0] ## Something to change
 learning_rate = 5e-7  ##5e-3## 5e-7 ## Something to change
 iterations = 100 ## Something to change
 P980s = power[conc]
-optimized_params, costs = gradient_descent_rand(initial_params, learning_rate, iterations, conc, P980s)
+optimized_params, costs = gradient_descent(initial_params, learning_rate, iterations, conc, P980s)
 
 print(optimized_params)
 print(costs)
