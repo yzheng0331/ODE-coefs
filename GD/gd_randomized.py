@@ -181,7 +181,7 @@ initial_params = [2, -1, 0, 2, 0, 2, 0] ## Something to change
 learning_rate = 5e-7  ##5e-3## 5e-7 ## Something to change
 iterations = 100 ## Something to change
 P980s = power[conc]
-optimized_params, costs = gradient_descent(initial_params, learning_rate, iterations, conc, P980s)
+optimized_params, costs = gradient_descent_rand(initial_params, learning_rate, iterations, conc, P980s)
 
 print(optimized_params)
 print(costs)
