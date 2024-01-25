@@ -4,6 +4,7 @@ from point import Point
 from utils import *
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+from tqdm import tqdm
 
 class Lattice():
     # shape of lattice based on https://www.nature.com/articles/s41598-018-19415-w and
@@ -24,7 +25,8 @@ class Lattice():
         l_r = int(d/2/0.596)
         l_z = int(d/2/0.353)
         na_points = [Point((i, j, k), mol = 'Na') for i in range(-l_r, l_r+1) for j in range(-l_r, l_r+1) for k in range(-l_z, l_z+1)]
-        y_coords = [Point((na.p[0]+1/4, na.p[1]+1/4, na.p[2]+1/4)) for na in na_points]
+        y_coords = [Point((na.p[0]+1/3, na.p[1]+1/3, na.p[2]+1/2)) for na in na_points]
+        y_coords = y_coords + [Point((na.p[0]-1/3, na.p[1]-1/3, na.p[2]+1/2)) for na in na_points]
         na_points = self.in_diameter(d, na_points)
         y_coords = self.in_diameter(d, y_coords)
         n_points = len(y_coords)
@@ -34,19 +36,15 @@ class Lattice():
         n_tm = int(tm_conc*n_points)
         types =  ['Yb'] * n_yb + ['Tm'] * n_tm + ['Y'] * (n_points - n_yb - n_tm)
         np.random.shuffle(types)
-        values = []
         for p, t in zip(y_coords, types):
             p.type = t
             if t == 'Yb':
                 p.state = np.random.choice([0, 1], p=[0.85, 0.15])
-                # values.append(np.random.choice([0, 1], p=[0.85, 0.15]))  
                 ### here, because of absorbation rate of Yb, set the rate manually as 0.85 and 0.15
             elif t == 'Tm':
                 p.state = 0
-                # values.append(0)  # All type B points have value 2
             else:
                 p.state = 0
-                # values.append(-1)  # No associated value for type C
         # y_points = [Point(coord, t, v) for t, coord, v in zip(types, y_coords, values)]
         y_points = y_coords
         
@@ -55,7 +53,8 @@ class Lattice():
         self.d = d
         self.r = r
         self.na_points = na_points
-        self.points = y_points
+        self.y_points = y_points
+        self.points = [p for p in self.y_points if p.type != 'Y']
         self.n_points = n_points
         self.get_neighbors(r)
         self.excited = [p for p in self.points if p.state != 0]
@@ -64,15 +63,15 @@ class Lattice():
     def get_neighbors(self, r):
         # Get all neighbors (within distance r) of every point 
         ret = {p:[] for p in self.points}
-        for i in range(self.n_points):
+        for i in tqdm(range(self.n_points)):
             i_nei = []
             for j in range(self.n_points):
                 if i == j :
                     continue
                 dist = self.points[i].to(self.points[j])
                 if dist <= r:
-                    i_nei.append(self.points[j])
-            ret[self.points[i]] = (i_nei, dist)
+                    i_nei.append((self.points[j], dist))
+            ret[self.points[i]] = i_nei
         self.neighbors = ret
 
     def in_diameter(self, d, points):
@@ -157,16 +156,20 @@ class Lattice():
         # Create 3D scatter plots
         trace_A = go.Scatter3d(x=x_A, y=y_A, z=z_A, mode='markers+text',
                             marker=dict(size=6, color='blue', opacity=0.8),
-                            text=values_A, textposition='top center')
+                            text=values_A, textposition='top center',
+                            name = 'Yb')
 
         trace_B = go.Scatter3d(x=x_B, y=y_B, z=z_B, mode='markers+text',
                             marker=dict(size=6, color='pink', opacity=0.8),
-                            text=values_B, textposition='top center')
+                            text=values_B, textposition='top center',
+                            name = 'Tm')
 
         # Combine plots and set layout
         data = [trace_A, trace_B]
         layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
         fig = go.Figure(data=data, layout=layout)
+        fig.update_layout(legend=dict(title='Legend'))
+        fig.layout.scene.camera.projection.type = "orthographic"
 
         # Display the figure
         fig.show()
@@ -177,8 +180,8 @@ class Lattice():
         na_y = [point[1] for point in euclidean_coords_na]
         na_z = [point[2] for point in euclidean_coords_na]
         trace_na = go.Scatter3d(x=na_x, y=na_y, z=na_z, mode='markers+text',
-                            marker=dict(size=3, color='black', opacity=0.8),
-                            text='Na', textposition='top center')
+                            marker=dict(size=4, color='green', opacity=0.8),
+                            text='Na', textposition='top center', name = 'Na')
 
         points = self.points
         # Separate points based on their type (A or B)
@@ -202,16 +205,20 @@ class Lattice():
         # Create 3D scatter plots
         trace_A = go.Scatter3d(x=x_A, y=y_A, z=z_A, mode='markers+text',
                             marker=dict(size=6, color='blue', opacity=0.8),
-                            text=values_A, textposition='top center')
+                            text=values_A, textposition='top center',
+                            name = 'Yb')
 
         trace_B = go.Scatter3d(x=x_B, y=y_B, z=z_B, mode='markers+text',
                             marker=dict(size=6, color='pink', opacity=0.8),
-                            text=values_B, textposition='top center')
+                            text=values_B, textposition='top center',
+                            name = 'Tm')
 
         # Combine plots and set layout
         data = [trace_A, trace_B, trace_na]
         layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
         fig = go.Figure(data=data, layout=layout)
+        fig.layout.scene.camera.projection.type = "orthographic"
+        fig.update_layout(legend=dict(title='Legend'))
 
         # Display the figure
         fig.show()
@@ -219,20 +226,24 @@ class Lattice():
     def deep_copy(self):
         # Create deep copy of lattice so that we can perform experiments with the same initial state
         # ALERT: na_points is not deep copied
-        cp = Lattice(self.yb_conc, self.tm_conc, self.d, seed=np.random.get_state())
+
+        # print(np.random.get_state())
+        cp = Lattice(self.yb_conc, self.tm_conc, self.d, self.r)
         cp.yb_conc = self.yb_conc
         cp.tm_conc = self.tm_conc 
         cp.d = self.d
         cp.r = self.r
 
         cp.na_points = self.na_points
-        cp.points = [p.deep_copy() for p in self.y_points]
+        cp.y_points = [p.deep_copy() for p in self.points]
+        cp.points = [p for p in cp.y_points if p.type != 'Y']
         cp.n_points = self.n_points
         cp.get_neighbors(cp.r)
         cp.excited = [p for p in cp.points if p.state != 0]
         cp.ground_yb = [p for p in cp.points if p.type == 'Yb'  and p.state == 0]
 
-
-lattice = Lattice(0.5, 0.5, 2, 1)
-lattice.plot_distributions()
-lattice.plot_3d_points_with_na()
+        return cp
+    
+# lattice = Lattice(0.5, 0.5, 10, 1)
+# lattice.plot_distributions()
+# lattice.plot_3d_points_with_plotly()
