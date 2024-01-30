@@ -1,14 +1,17 @@
 import numpy as np
 import math
-from point import Point
+from point import *
 from utils import *
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from tqdm import tqdm
+from scipy.integrate import odeint
 
 class Lattice():
     # shape of lattice based on https://www.nature.com/articles/s41598-018-19415-w and
     # https://www.researchgate.net/publication/253240215_Enhancement_of_blue_upconversion_luminescence_in_hexagonal_NaYF_4_YbTm_by_using_K_and_Sc_ions?enrichId=rgreq-ded66b2e7d92246868aa37d5e2ce7db2-XXX&enrichSource=Y292ZXJQYWdlOzI1MzI0MDIxNTtBUzoxMDIwMTIzNzI5MTQxNzlAMTQwMTMzMzA1MzY0Nw%3D%3D&el=1_x_3&_esc=publicationCoverPdf
+    # Power-Dependent Optimal Concentrations of Tm3+ and Yb3+ in Upconversion Nanoparticles
+
     # Simplifying assumptions: in a unit cell, 
     #     xy projection: in the center of triangle formed by Na
     #     z projection: height is the middle point between 2 layers of Na
@@ -50,6 +53,8 @@ class Lattice():
         
         self.yb_conc = yb_conc
         self.tm_conc = tm_conc 
+        self.yb_num = n_yb
+        self.tm_num = n_tm
         self.d = d
         self.r = r
         self.na_points = na_points
@@ -122,16 +127,31 @@ class Lattice():
         # Plotting value distribution for type B using histogram
         # 1 row, 3 columns, 3rd plot
         plt.subplot(1, 3, 3)
-        counts, bins, patches = plt.hist(all_values_B, bins=[0, 1, 2, 3, 4, 5], align='left', rwidth=0.4, color='pink')
+        counts, bins, patches = plt.hist(all_values_B, bins=[0, 1, 2, 3, 4, 5, 6, 7], align='left', rwidth=0.4, color='pink')
 
         plt.ylabel('Count',fontsize=18)
         plt.title('Value distribution for emitters',fontsize=18)
-        plt.xticks([0, 1, 2, 3, 4], ['G', '1st', '2nd', '3rd', '4th'],fontsize=16)
+        plt.xticks([0, 1, 2, 3, 4, 5, 6, 7], ['G', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'],fontsize=16)
         for count, bin, patch in zip(counts, bins, patches):
             plt.text(bin + 0.01, count + 1, int(count), ha='center', va='bottom')
 
         plt.tight_layout()
         plt.show()
+    
+    def collect_stats(self):
+        yb_1 = len([i for i in self.points if i.type == 'Yb' and i.state == 1])
+        yb_0 = len([i for i in self.points if i.type == 'Yb' and i.state == 0])
+
+        tm_0 = len([i for i in self.points if i.type == 'Tm' and i.state == 0])
+        tm_1 = len([i for i in self.points if i.type == 'Tm' and i.state == 1])
+        tm_2 = len([i for i in self.points if i.type == 'Tm' and i.state == 2])
+        tm_3 = len([i for i in self.points if i.type == 'Tm' and i.state == 3])
+        tm_4 = len([i for i in self.points if i.type == 'Tm' and i.state == 4])
+        tm_5 = len([i for i in self.points if i.type == 'Tm' and i.state == 5])
+        tm_6 = len([i for i in self.points if i.type == 'Tm' and i.state == 6])
+        tm_7 = len([i for i in self.points if i.type == 'Tm' and i.state == 7])
+
+        return [yb_0, yb_1], [tm_0, tm_1, tm_2, tm_3, tm_4, tm_5, tm_6, tm_7]
 
     def plot_3d_points_with_plotly(self):
         points = self.points
@@ -173,6 +193,7 @@ class Lattice():
 
         # Display the figure
         fig.show()
+        fig.write_html("small.html")
 
     def plot_3d_points_with_na(self):
         euclidean_coords_na = [(point.to_euclidean()) for point in self.na_points]
@@ -244,6 +265,46 @@ class Lattice():
 
         return cp
     
-# lattice = Lattice(0.5, 0.5, 10, 1)
+    def ode_distribution(self):
+        ## Why ODE and MC doesn't match? presence of c0
+        ## TODO: plot ode distribution
+        n_yb = int(self.yb_conc*self.n_points)
+        n_tm = int(self.tm_conc*self.n_points)
+
+        def system(state, t):
+
+            ns2, n0, n1, n2, n3, n4, n5, n6, n7 = state
+            ms2 = tag['laser']*(n_yb-ns2) - tag['Ws']*ns2 - (tag['c1']*n0+tag['c2']*n1+tag['c3']*n3+tag['c1']*n6)*ns2
+            m0 = -tag['c1']*n0*ns2                   + tag['W10']*n1 + tag['W20']*n2 + tag['W30']*n3 + tag['W40']*n4 + tag['W50']*n5 + tag['W60']*n6 + tag['W70']*n7 - tag['k31']*n0*n3 - tag['k41']*n0*n6 - tag['k51']*n0*n7
+            m1 = -tag['c2']*n1*ns2 + tag['MPR21']*n2 - tag['W10']*n1 + tag['W21']*n2 + tag['W31']*n3 + tag['W41']*n4 + tag['W51']*n5 + tag['W61']*n6 + tag['W71']*n7 + tag['k31']*n0*n3
+            m2 = tag['c1']*n0*ns2 - tag['MPR21']*n2  - tag['W20']*n2 - tag['W21']*n2 + tag['W32']*n3 + tag['W42']*n4 + tag['W52']*n5 + tag['W62']*n6 + tag['W72']*n7 + tag['k31']*n0*n3 + tag['k41']*n0*n6
+            m3 = tag['c3']*n3*ns2 + tag['MPR43']*n4  - tag['W30']*n3 - tag['W31']*n3 - tag['W32']*n3 + tag['W40']*n4 + tag['W53']*n5 + tag['W63']*n6 + tag['W73']*n7 - tag['k31']*n0*n3 + tag['k41']*n0*n6 + tag['k51']*n0*n7
+            m4 = tag['c2']*n1*ns2 - tag['MPR43']*n4  - tag['W40']*n4 - tag['W41']*n4 - tag['W42']*n4 - tag['W43']*n4 + tag['W54']*n5 + tag['W64']*n6 + tag['W74']*n7 
+            m5 =                                     - tag['W50']*n5 - tag['W51']*n5 - tag['W52']*n5 - tag['W53']*n5 - tag['W54']*n5 + tag['W65']*n6 + tag['W75']*n7 + tag['k51']*n0*n7
+            m6 = tag['c3']*n3*ns2 - tag['c4']*n6*ns2 - tag['W60']*n6 - tag['W61']*n6 - tag['W62']*n6 - tag['W63']*n6 - tag['W64']*n6 - tag['W65']*n6 + tag['W76']*n7 - tag['k41']*n0*n6
+            m7 = tag['c4']*n6*ns2                    - tag['W70']*n7 - tag['W71']*n7 - tag['W72']*n7 - tag['W73']*n7 - tag['W74']*n7 - tag['W75']*n7 - tag['W76']*n7 - tag['k51']*n0*n7
+
+            return [ms2, m0, m1, m2, m3, m4, m5, m6, m7]
+        
+        yb_excited = len([i for i in self.y_points if i.type == 'Yb' and i.state == 1])
+        state0 = [yb_excited, n_tm, 0, 0, 0, 0, 0, 0, 0]
+        t = np.arange(0.0, 0.001, 0.000001)
+        state = odeint(system, state0, t)
+
+        state_f = [state[:, 0][-1], state[:, 1][-1], state[:, 2][-1], state[:, 3][-1], state[:, 4][-1], state[:, 5][-1], state[:, 6][-1], state[:, 7][-1], state[:, 8][-1]]
+        # print(state_f)
+        # print(n_yb)
+        # print(state[:,0][:10])
+        # print(state[:,2][:10])
+        return state_f
+    
+
+
+
+
+
+# lattice = Lattice(0.5, 0.5, 5, 0.5)
+# lattice.ode_distribution()
 # lattice.plot_distributions()
 # lattice.plot_3d_points_with_plotly()
+
