@@ -32,24 +32,22 @@ class Lattice():
         y_coords = y_coords + [Point((na.p[0]-1/3, na.p[1]-1/3, na.p[2]+1/2)) for na in na_points]
         na_points = self.in_diameter(d, na_points)
         y_coords = self.in_diameter(d, y_coords)
-        n_points = len(y_coords)
+        n_points = int(len(y_coords) * 3/4)  # 3/4 probability for Y/Yb/Tm
 
-        # Assign molecules to the lattice points
+        # Assign molecules to the lattice points 
         n_yb = int(yb_conc*n_points)
         n_tm = int(tm_conc*n_points)
-        types =  ['Yb'] * n_yb + ['Tm'] * n_tm + ['Y'] * (n_points - n_yb - n_tm)
+        types = ['Na'] * (len(y_coords) - n_points) + ['Yb'] * n_yb + ['Tm'] * n_tm + ['Y'] * (n_points - n_yb - n_tm)
         np.random.shuffle(types)
         for p, t in zip(y_coords, types):
             p.type = t
             if t == 'Yb':
                 p.state = np.random.choice([0, 1], p=[0.85, 0.15])
                 ### here, because of absorbation rate of Yb, set the rate manually as 0.85 and 0.15
-            elif t == 'Tm':
-                p.state = 0
             else:
                 p.state = 0
-        # y_points = [Point(coord, t, v) for t, coord, v in zip(types, y_coords, values)]
-        y_points = y_coords
+        y_points = [p for p in y_coords if p.type != 'Na'] 
+        na_points = na_points + [p for p in y_coords if p.type == 'Na']
         
         self.yb_conc = yb_conc
         self.tm_conc = tm_conc 
@@ -58,8 +56,8 @@ class Lattice():
         self.d = d
         self.r = r
         self.na_points = na_points
-        self.y_points = y_points
-        self.points = [p for p in self.y_points if p.type != 'Y']
+        self.y_points = y_points # Y/Yb/Tm points
+        self.points = [p for p in self.y_points if p.type != 'Y'] # rare earth doping points
         self.n_points = n_points
         self.get_neighbors(r)
         self.excited = [p for p in self.points if p.state != 0]
