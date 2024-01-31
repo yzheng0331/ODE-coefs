@@ -18,7 +18,6 @@ class Lattice():
 
     # Some ignored details: probabilistic occupation of nodes, P\bar{6}2m, P\bar{6}, P6_3m
     #    https://www.researchgate.net/profile/Sameera-Perera-2/publication/318604006_Average_and_Local_Crystal_Structure_of_b-ErYbNaYF_4_Upconverting_Nanocrystals_Probed_by_X-ray_Total_Scattering/links/62f94e40b8dc8b4403e1987c/Average-and-Local-Crystal-Structure-of-b-ErYbNaYF-4-Upconverting-Nanocrystals-Probed-by-X-ray-Total-Scattering.pdf
-    # TODO: do we need to modify the model?
 
     def __init__(self, yb_conc, tm_conc, d, r, seed = None):
         if seed is not None:
@@ -57,8 +56,8 @@ class Lattice():
         self.r = r
         self.na_points = na_points
         self.y_points = y_points # Y/Yb/Tm points
-        self.points = [p for p in self.y_points if p.type != 'Y'] # rare earth doping points
-        self.n_points = n_points
+        self.points = [p for p in self.y_points if p.type != 'Y'] # rare earth doping points, Yb/Tm
+        self.n_points = len(self.points) # number of Yb/Tm points
         self.get_neighbors(r)
         self.excited = [p for p in self.points if p.state != 0]
         self.ground_yb = [p for p in self.points if p.type == 'Yb'  and p.state == 0]
@@ -156,6 +155,7 @@ class Lattice():
         # Separate points based on their type (A or B)
         points_A = [point for point in points if point.type == 'Yb']
         points_B = [point for point in points if point.type == 'Tm']
+        points_Y = [point for point in self.y_points if point.type == 'Y']
 
         # Extract coordinates and values for points of type A
         euclidean_coords_A = [(point.to_euclidean()) for point in points_A]
@@ -171,6 +171,12 @@ class Lattice():
         z_B = [point[2] for point in euclidean_coords_B]
         values_B = [point.state for point in points_B]
 
+        # Extract coordinates and values for points of type Y
+        euclidean_coords_Y = [(point.to_euclidean()) for point in points_Y]
+        x_Y = [point[0] for point in euclidean_coords_Y]
+        y_Y = [point[1] for point in euclidean_coords_Y]
+        z_Y = [point[2] for point in euclidean_coords_Y]
+
         # Create 3D scatter plots
         trace_A = go.Scatter3d(x=x_A, y=y_A, z=z_A, mode='markers+text',
                             marker=dict(size=6, color='blue', opacity=0.8),
@@ -181,9 +187,13 @@ class Lattice():
                             marker=dict(size=6, color='pink', opacity=0.8),
                             text=values_B, textposition='top center',
                             name = 'Tm')
+        
+        trace_Y = go.Scatter3d(x=x_Y, y=y_Y, z=z_Y, mode='markers',
+                            marker=dict(size=6, color='gray', opacity=0.8),
+                            textposition='top center', name = 'Y')
 
         # Combine plots and set layout
-        data = [trace_A, trace_B]
+        data = [trace_A, trace_B, trace_Y]
         layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
         fig = go.Figure(data=data, layout=layout)
         fig.update_layout(legend=dict(title='Legend'))
@@ -192,7 +202,7 @@ class Lattice():
         # Display the figure
         fig.show()
         fig.write_html("small.html")
-
+    
     def plot_3d_points_with_na(self):
         euclidean_coords_na = [(point.to_euclidean()) for point in self.na_points]
         na_x = [point[0] for point in euclidean_coords_na]
@@ -206,6 +216,7 @@ class Lattice():
         # Separate points based on their type (A or B)
         points_A = [point for point in points if point.type == 'Yb']
         points_B = [point for point in points if point.type == 'Tm']
+        points_Y = [point for point in self.y_points if point.type == 'Y']
 
         # Extract coordinates and values for points of type A
         euclidean_coords_A = [(point.to_euclidean()) for point in points_A]
@@ -221,6 +232,16 @@ class Lattice():
         z_B = [point[2] for point in euclidean_coords_B]
         values_B = [point.state for point in points_B]
 
+        # Extract coordinates and values for points of type Y
+        euclidean_coords_Y = [(point.to_euclidean()) for point in points_Y]
+        x_Y = [point[0] for point in euclidean_coords_Y]
+        y_Y = [point[1] for point in euclidean_coords_Y]
+        z_Y = [point[2] for point in euclidean_coords_Y]
+
+        trace_Y = go.Scatter3d(x=x_Y, y=y_Y, z=z_Y, mode='markers',
+                            marker=dict(size=6, color='gray', opacity=0.8),
+                            textposition='top center', name = 'Y')
+
         # Create 3D scatter plots
         trace_A = go.Scatter3d(x=x_A, y=y_A, z=z_A, mode='markers+text',
                             marker=dict(size=6, color='blue', opacity=0.8),
@@ -233,7 +254,7 @@ class Lattice():
                             name = 'Tm')
 
         # Combine plots and set layout
-        data = [trace_A, trace_B, trace_na]
+        data = [trace_A, trace_B, trace_Y, trace_na]
         layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
         fig = go.Figure(data=data, layout=layout)
         fig.layout.scene.camera.projection.type = "orthographic"
@@ -265,7 +286,6 @@ class Lattice():
     
     def ode_distribution(self):
         ## Why ODE and MC doesn't match? presence of c0
-        ## TODO: plot ode distribution
         n_yb = int(self.yb_conc*self.n_points)
         n_tm = int(self.tm_conc*self.n_points)
 
@@ -290,10 +310,19 @@ class Lattice():
         state = odeint(system, state0, t)
 
         state_f = [state[:, 0][-1], state[:, 1][-1], state[:, 2][-1], state[:, 3][-1], state[:, 4][-1], state[:, 5][-1], state[:, 6][-1], state[:, 7][-1], state[:, 8][-1]]
-        # print(state_f)
-        # print(n_yb)
-        # print(state[:,0][:10])
-        # print(state[:,2][:10])
+        
+        plt.figure(figsize=(5, 5))
+        bars = plt.bar([0, 1, 2, 3, 4, 5, 6, 7], state_f[1:], width=0.4, color='pink')
+        plt.ylabel('Count',fontsize=18)
+        plt.title('ODE value distribution for emitters',fontsize=18)
+        plt.xticks([0, 1, 2, 3, 4, 5, 6, 7], ['G', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'],fontsize=16)
+        for i, bar in enumerate(bars):
+            yval = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2, yval + 5, round(state_f[i+1],1), ha='center', va='bottom')
+
+        plt.tight_layout()
+        plt.show()
+
         return state_f
     
 
@@ -301,8 +330,10 @@ class Lattice():
 
 
 
-# lattice = Lattice(0.5, 0.5, 5, 0.5)
-# lattice.ode_distribution()
+# lattice = Lattice(0.6, 0.3, 4, 0.5)
+
+# print(lattice.ode_distribution())
 # lattice.plot_distributions()
 # lattice.plot_3d_points_with_plotly()
+# lattice.plot_3d_points_with_na()
 

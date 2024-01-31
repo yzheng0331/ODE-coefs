@@ -1,4 +1,4 @@
-from utils import *
+from utils import to_euclidean, e_distance
 
 tag={'c0':10000,'c1':1000,'c2':1000,'c3':1000,'c4':1000,'k31':1000,'k41':1000,'k51':1000,
         'Ws':1000,
@@ -71,7 +71,12 @@ class Point():
     def get_decay_rates(self):
         ret = []
         for i in range(self.state):
-            ret.append(tag[f'W{self.state}{i}'])
+            if self.state == 2 and i == 1:
+                ret.append(tag[f'W{self.state}{i}'] + tag['MPR21'])
+            elif self.state == 4 and i == 3:
+                ret.append(tag[f'W{self.state}{i}'] + tag['MPR43'])
+            else:
+                ret.append(tag[f'W{self.state}{i}'])
         return ret
 
     def __str__(self):
