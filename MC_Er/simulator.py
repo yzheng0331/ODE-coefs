@@ -13,16 +13,17 @@ tag_default={'S1S0':100000, # energy transfer
      'A1A0': 5000, 'A1A1':600, # activator cross relaxation 
      'laser': 5.76*10**(-6)} # 100W
 dt = 10**(-6)
-sqr = 10**5
+# sqr = 0 # 10**5
 
 class Simulator():
-    def __init__(self, lattice, tag = None):
+    def __init__(self, lattice, tag = None, sqr = 0):
         self.lattice = lattice.deep_copy()
         self.t = 0
         if tag is not None:
             self.tag = tag
         else:
             self.tag = tag_default
+        self.sqr = 0
 
     def step(self, steps = 1, ss = 0, emission = False):
         # TODO 进的能量，出的能量，和能量差
@@ -52,7 +53,7 @@ class Simulator():
 
                 p_decay_rates = p.get_decay_rates(self.tag)
                 if self.lattice.on_boundary(p):
-                    p_decay_rates += sqr
+                    p_decay_rates += self.sqr
                 no_reaction_prob = 1-dt*(sum(rates) + p_decay_rates)
 
                 # stay in current state
@@ -62,12 +63,12 @@ class Simulator():
                 # decay
                 if np.random.rand() < p_decay_rates / (sum(rates) + p_decay_rates):
                     if p.type == 'Yb': 
-                        if self.lattice.on_boundary(p) and np.random.rand() < sqr / p_decay_rates:
+                        if self.lattice.on_boundary(p) and np.random.rand() < self.sqr / p_decay_rates:
                             ret[5] += 1
                         else:
                             ret[1] += 1
                     else:
-                        if self.lattice.on_boundary(p) and np.random.rand() < sqr / p_decay_rates:
+                        if self.lattice.on_boundary(p) and np.random.rand() < self.sqr / p_decay_rates:
                             ret[5] += 1
                         elif p.state == 1:
                             ret[2] += 1
