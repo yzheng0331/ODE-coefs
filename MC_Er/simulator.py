@@ -23,7 +23,7 @@ class Simulator():
             self.tag = tag
         else:
             self.tag = tag_default
-        self.sqr = 0
+        self.sqr = sqr
 
     def step(self, steps = 1, ss = 0, emission = False):
         # TODO 进的能量，出的能量，和能量差
