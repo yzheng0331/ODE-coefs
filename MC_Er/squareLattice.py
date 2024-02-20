@@ -24,7 +24,7 @@ class SquareLattice():
         for p, t in zip(points, types):
             p.type = t
             if t == 'Yb':
-                p.state = np.random.choice([0, 1], p=[0.994, 0.006])
+                p.state = 0 # np.random.choice([0, 1], p=[0.994, 0.006])
             else:
                 p.state = 0
         self.coordToPoints = coordToPoints        
