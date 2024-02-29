@@ -1,17 +1,5 @@
 from utils import to_euclidean, e_distance
 
-tag={'c0':10000,'c1':1000,'c2':1000,'c3':1000,'c4':1000,'k31':1000,'k41':1000,'k51':1000,
-        'Ws':1000,
-        'W10':1000,
-        'W21':1000,'W20':1000,
-        'W32':1000,'W31':1000,'W30':1000,
-        'W43':1000,'W42':1000,'W41':1000,'W40':1000,
-        'W54':1000,'W53':1000,'W52':1000,'W51':1000,'W50':1000,
-        'W65':1000,'W64':1000,'W63':1000,'W62':1000,'W61':1000,'W60':1000,
-        'W76':1000,'W75':1000,'W74':1000,'W73':1000,'W72':1000,'W71':1000,'W70':1000,
-        'MPR21':1000,'MPR43':1000,
-        'laser': 1000}
-
 
 class Point():
     def __init__(self, coor, mol=None, state=None):
@@ -39,7 +27,7 @@ class Point():
     def deep_copy(self):
         return Point(self.p, self.type, self.state)
     
-    def react(self, other):
+    def react(self, other, tag):
         # return rate, new states
         if self.type == 'Yb' and self.state == 1:
             if other.type == 'Yb':
@@ -68,7 +56,7 @@ class Point():
             
         return None
     
-    def get_decay_rates(self):
+    def get_decay_rates(self, tag):
         ret = []
         for i in range(self.state):
             if self.state == 2 and i == 1:
