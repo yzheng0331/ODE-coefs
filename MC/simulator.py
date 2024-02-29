@@ -46,8 +46,8 @@ class Simulator():
                 rates = []
                 pair_rates = []
                 neighbors = self.lattice.neighbors[p]
-                for nei, _ in neighbors:
-                    pair = p.react(nei, self.tag)
+                for nei, distance in neighbors:
+                    pair = p.react(nei, self.tag, distance)
                     if pair is not None:
                         rates.append(pair[0])
                         pair_rates.append((nei, pair[1]))

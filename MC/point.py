@@ -27,32 +27,32 @@ class Point():
     def deep_copy(self):
         return Point(self.p, self.type, self.state)
     
-    def react(self, other, tag):
+    def react(self, other, tag, distance):
         # return rate, new states
         if self.type == 'Yb' and self.state == 1:
             if other.type == 'Yb':
                 if other.state == 0:
-                    return tag['c0'], (0, 1)
+                    return tag['c0'] / (distance/10**9)**6, (0, 1)
                 return None
             else:
                 if other.state == 0:
-                    return tag['c1'], (0, 2)
+                    return tag['c1'] / (distance/10**9)**6, (0, 2)
                 if other.state == 1:
-                    return tag['c2'], (0, 4)
+                    return tag['c2'] / (distance/10**9)**6, (0, 4)
                 if other.state == 3:
-                    return tag['c3'], (0, 6)
+                    return tag['c3'] / (distance/10**9)**6, (0, 6)
                 if other.state == 6:
-                    return tag['c4'], (0, 7)
+                    return tag['c4'] / (distance/10**9)**6, (0, 7)
                 else:
                     return None
                 
         elif self.type == 'Tm' and other.type == 'Tm':
             if self.state == 3 and other.state == 0:
-                return tag['k31'], (1, 1)
+                return tag['k31'] / (distance/10**9)**6, (1, 1)
             if self.state == 6 and other.state == 0:
-                return tag['k41'], (2, 3)
+                return tag['k41'] / (distance/10**9)**6, (2, 3)
             if self.state == 7 and other.state == 0:
-                return tag['k51'], (5, 3)
+                return tag['k51'] / (distance/10**9)**6, (5, 3)
             
         return None
     
