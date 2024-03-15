@@ -32,13 +32,18 @@ class Simulator():
     def step(self, steps = 1, emission = False):
         # TODO 进的能量，出的能量，和能量差
         if emission:
-            nirs = []
-            blues = []
-        printed = False
+            nir30s = []
+            nir75s = []
+            nir62s = []
+            blue71s = []
+            blue60s = []
         for _ in range(steps):
             if emission:
-                nir = 0
-                blue = 0
+                nir30 = 0
+                nir75 = 0
+                nir62 = 0
+                blue71 = 0
+                blue60 = 0
 
             np.random.shuffle(self.lattice.excited)
 
@@ -47,21 +52,14 @@ class Simulator():
                 rates = []
                 pair_rates = []
                 neighbors = self.lattice.neighbors[p]
-                flag = False
                 for nei, distance in neighbors:
                     pair = p.react(nei, self.tag, distance)
-                    if nei.type == 'Tm' and nei.state == 3:
-                        flag = True
                     if pair is not None:
                         rates.append(pair[0])
                         pair_rates.append((nei, pair[1]))
                 
                 p_decay_rates = p.get_decay_rates(self.tag)
                 no_reaction_prob = 1-self.dt*(sum(rates) + sum(p_decay_rates))
-                # if flag and not printed:
-                #     print([(rate, pair_rate) for rate, pair_rate in zip(rates, pair_rates)], p_decay_rates, sum(rates) + sum(p_decay_rates))
-                #     printed = True
-                #     flag = False
 
                 # stay in current state
                 if np.random.rand() < no_reaction_prob:
@@ -75,15 +73,15 @@ class Simulator():
                     new_state = np.random.choice(decayed, p=p_decay_rates)
                     if emission: ## TODO: 怎么从个数换算到intensity
                         if p.state == 3 and new_state == 0:
-                            nir += 1
+                            nir30 += 1
                         if p.state == 7 and new_state == 5:
-                            nir += 1
+                            nir75 += 1
                         if p.state == 6 and new_state == 2:
-                            nir += 1
+                            nir62 += 1
                         if p.state == 7 and new_state == 1:
-                            blue += 1
+                            blue71 += 1
                         if p.state == 6 and new_state == 0:
-                            blue += 1
+                            blue60 += 1
                     p.state = new_state
 
                 # etu
@@ -105,13 +103,26 @@ class Simulator():
             self.t += 1
 
             if emission:
-                nirs.append(nir)
-                blues.append(blue)
+                nir30s.append(nir30)
+                nir75s.append(nir75)
+                nir62s.append(nir62)
+                blue71s.append(blue71)
+                blue60s.append(blue60)
+        
         if emission:
-            if steps == 1:
-                return nirs[0], blues[0]
+            step_data = {}
+            yb_state = [len([p for p in self.lattice.points if p.state == i and p.type == 'Yb']) for i in range(2)]
+            step_data['yb_state'] = yb_state
+            tm_state = [len([p for p in self.lattice.points if p.state == i and p.type == 'Tm']) for i in range(8)]
+            step_data['tm_state'] = tm_state
+            if steps == 1: 
+                step_data['nir'] = nir30s[0], nir75s[0], nir62s[0]
+                step_data['blue'] = blue71s[0], blue60s[0]
+                return step_data
             else: 
-                return nirs, blues
+                step_data['nir'] = nir30s, nir75s, nir62s
+                step_data['blue'] = blue71s, blue60s
+                return step_data
     
     def show_state(self):
         self.lattice.plot_3d_points_with_plotly()
@@ -122,8 +133,14 @@ class Simulator():
     def simulate(self, t1, t2=None):
         ## At 2500 steps, reach steady state
         ## 折射率是1.5
+        yb_state_evolution = {i:[] for i in range(0, 2)}
+        tm_state_evolution = {i:[] for i in range(0, 8)}
         for _ in tqdm(range(t1)):
-            self.step()
+            r = self.step(emission=True)
+            for i in range(2):
+                yb_state_evolution[i].append(r['yb_state'][i])
+            for i in range(8):
+                tm_state_evolution[i].append(r['tm_state'][i])
         if t2 is None:
             return
         c = 0
@@ -131,17 +148,43 @@ class Simulator():
         tm_stats = []
         nirs = []
         blues = []
+        nir30s = []
+        nir75s = []
+        nir62s = []
+        blue71s = []
+        blue60s = []
         for _ in tqdm(range(t2-t1)):
-            nir, blue = self.step(emission = True)
-            nirs.append(nir)
-            blues.append(blue)
+            r = self.step(emission = True)
+            nirs.append(sum(r['nir']))
+            blues.append(sum(r['blue']))
+            nir30s.append(r['nir'][0])
+            nir75s.append(r['nir'][1])
+            nir62s.append(r['nir'][2])
+            blue71s.append(r['blue'][0])
+            blue60s.append(r['blue'][1])
+            for i in range(2):
+                yb_state_evolution[i].append(r['yb_state'][i])
+            for i in range(8):
+                tm_state_evolution[i].append(r['tm_state'][i])
             c+=1
             if c%100 == 0:
                 yb_stat, tm_stat = self.lattice.collect_stats()
                 yb_stats.append(yb_stat)
                 tm_stats.append(tm_stat)
         # self.plot_stats(yb_stats, tm_stats)
-        return np.mean(nirs), np.mean(blues)
+        sim_stats = {}
+        sim_stats['nir_microsecond'] = nirs
+        sim_stats['blue_microsecond'] = blues
+        sim_stats['nir30s'] = nir30s
+        sim_stats['nir75s'] = nir75s
+        sim_stats['nir62s'] = nir62s
+        sim_stats['blue71s'] = blue71s
+        sim_stats['blue60s'] = blue60s
+        sim_stats['nir_avg'] = np.mean(nirs)
+        sim_stats['blue_avg'] = np.mean(blues)
+        sim_stats['yb_distribution'] = yb_state_evolution
+        sim_stats['tm_distribution'] = tm_state_evolution
+        return sim_stats
     
     def plot_stats(self, yb_stats, tm_stats):
 
