@@ -35,15 +35,19 @@ class Simulator():
             nir30s = []
             nir75s = []
             nir62s = []
+            nir74s = []
             blue71s = []
             blue60s = []
+            blue72s = []
         for _ in range(steps):
             if emission:
                 nir30 = 0
                 nir75 = 0
                 nir62 = 0
+                nir74 = 0
                 blue71 = 0
                 blue60 = 0
+                blue72 = 0
 
             np.random.shuffle(self.lattice.excited)
 
@@ -78,10 +82,14 @@ class Simulator():
                             nir75 += 1
                         if p.state == 6 and new_state == 2:
                             nir62 += 1
+                        if p.state == 7 and new_state == 4:
+                            nir74 += 1
                         if p.state == 7 and new_state == 1:
                             blue71 += 1
                         if p.state == 6 and new_state == 0:
                             blue60 += 1
+                        if p.state == 7 and new_state == 2:
+                            blue72 += 1
                     p.state = new_state
 
                 # etu
@@ -106,8 +114,10 @@ class Simulator():
                 nir30s.append(nir30)
                 nir75s.append(nir75)
                 nir62s.append(nir62)
+                nir74s.append(nir74)
                 blue71s.append(blue71)
                 blue60s.append(blue60)
+                blue72s.append(blue72)
         
         if emission:
             step_data = {}
@@ -116,12 +126,12 @@ class Simulator():
             tm_state = [len([p for p in self.lattice.points if p.state == i and p.type == 'Tm']) for i in range(8)]
             step_data['tm_state'] = tm_state
             if steps == 1: 
-                step_data['nir'] = nir30s[0], nir75s[0], nir62s[0]
-                step_data['blue'] = blue71s[0], blue60s[0]
+                step_data['nir'] = nir30s[0], nir75s[0], nir62s[0], nir74s[0]
+                step_data['blue'] = blue71s[0], blue60s[0], blue72s[0]
                 return step_data
             else: 
-                step_data['nir'] = nir30s, nir75s, nir62s
-                step_data['blue'] = blue71s, blue60s
+                step_data['nir'] = nir30s, nir75s, nir62s, nir74s
+                step_data['blue'] = blue71s, blue60s, blue72s
                 return step_data
     
     def show_state(self):
@@ -151,8 +161,10 @@ class Simulator():
         nir30s = []
         nir75s = []
         nir62s = []
+        nir74s = []
         blue71s = []
         blue60s = []
+        blue72s = []
         for _ in tqdm(range(t2-t1)):
             r = self.step(emission = True)
             nirs.append(sum(r['nir']))
@@ -160,8 +172,10 @@ class Simulator():
             nir30s.append(r['nir'][0])
             nir75s.append(r['nir'][1])
             nir62s.append(r['nir'][2])
+            nir74s.append(r['nir'][3])
             blue71s.append(r['blue'][0])
             blue60s.append(r['blue'][1])
+            blue72s.append(r['blue'][2])
             for i in range(2):
                 yb_state_evolution[i].append(r['yb_state'][i])
             for i in range(8):
@@ -178,8 +192,10 @@ class Simulator():
         sim_stats['nir30s'] = nir30s
         sim_stats['nir75s'] = nir75s
         sim_stats['nir62s'] = nir62s
+        sim_stats['nir74s'] = nir74s
         sim_stats['blue71s'] = blue71s
         sim_stats['blue60s'] = blue60s
+        sim_stats['blue72s'] = blue72s
         sim_stats['nir_avg'] = np.mean(nirs)
         sim_stats['blue_avg'] = np.mean(blues)
         sim_stats['yb_distribution'] = yb_state_evolution
