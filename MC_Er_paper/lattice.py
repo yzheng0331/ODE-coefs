@@ -36,7 +36,7 @@ class Lattice():
         # Assign molecules to the lattice points 
         n_yb = int(yb_conc*n_points)
         n_tm = int(tm_conc*n_points)
-        types = ['Na'] * (len(y_coords) - n_points) + ['Yb'] * n_yb + ['Er'] * n_tm + ['Y'] * (n_points - n_yb - n_tm)
+        types = ['Na'] * (len(y_coords) - n_points) + ['Yb'] * n_yb + ['Tm'] * n_tm + ['Y'] * (n_points - n_yb - n_tm)
         np.random.shuffle(types)
         for p, t in zip(y_coords, types):
             p.type = t
@@ -91,7 +91,7 @@ class Lattice():
         # Create a list of all types and values for easier plotting
         all_types = [point.type for point in points]
         all_values_A = [point.state for point in points if point.type == 'Yb']
-        all_values_B = [point.state for point in points if point.type == 'Er']
+        all_values_B = [point.state for point in points if point.type == 'Tm']
 
         plt.figure(figsize=(15, 5))
 
@@ -103,10 +103,10 @@ class Lattice():
         counts_tmp = dict(zip(labels, counts))
         counts_tmp['Y'] = counts_tmp.setdefault('Y', 0)
 
-        bars = plt.bar(['Yb', 'Er', 'Y'], [counts_tmp['Yb'], counts_tmp['Er'], counts_tmp['Y']], color=['blue', 'pink', 'green'], width=0.4)
+        bars = plt.bar(['Yb', 'Tm', 'Y'], [counts_tmp['Yb'], counts_tmp['Tm'], counts_tmp['Y']], color=['blue', 'pink', 'green'], width=0.4)
         plt.ylabel('Count',fontsize=18)
         plt.title('Distribution of three types',fontsize=18)
-        plt.xticks(['Yb', 'Er', 'Y'], ['Sensitizers', 'Emitters', 'Others'],fontsize=16)
+        plt.xticks(['Yb', 'Tm', 'Y'], ['Sensitizers', 'Emitters', 'Others'],fontsize=16)
         for bar in bars:
             yval = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2, yval + 5, yval, ha='center', va='bottom')
@@ -139,14 +139,14 @@ class Lattice():
         yb_1 = len([i for i in self.points if i.type == 'Yb' and i.state == 1])
         yb_0 = len([i for i in self.points if i.type == 'Yb' and i.state == 0])
 
-        tm_0 = len([i for i in self.points if i.type == 'Er' and i.state == 0])
-        tm_1 = len([i for i in self.points if i.type == 'Er' and i.state == 1])
-        tm_2 = len([i for i in self.points if i.type == 'Er' and i.state == 2])
-        tm_3 = len([i for i in self.points if i.type == 'Er' and i.state == 3])
-        tm_4 = len([i for i in self.points if i.type == 'Er' and i.state == 4])
-        tm_5 = len([i for i in self.points if i.type == 'Er' and i.state == 5])
-        tm_6 = len([i for i in self.points if i.type == 'Er' and i.state == 6])
-        tm_7 = len([i for i in self.points if i.type == 'Er' and i.state == 7])
+        tm_0 = len([i for i in self.points if i.type == 'Tm' and i.state == 0])
+        tm_1 = len([i for i in self.points if i.type == 'Tm' and i.state == 1])
+        tm_2 = len([i for i in self.points if i.type == 'Tm' and i.state == 2])
+        tm_3 = len([i for i in self.points if i.type == 'Tm' and i.state == 3])
+        tm_4 = len([i for i in self.points if i.type == 'Tm' and i.state == 4])
+        tm_5 = len([i for i in self.points if i.type == 'Tm' and i.state == 5])
+        tm_6 = len([i for i in self.points if i.type == 'Tm' and i.state == 6])
+        tm_7 = len([i for i in self.points if i.type == 'Tm' and i.state == 7])
 
         return [yb_0, yb_1], [tm_0, tm_1, tm_2, tm_3, tm_4, tm_5, tm_6, tm_7]
 
@@ -154,7 +154,7 @@ class Lattice():
         points = self.points
         # Separate points based on their type (A or B)
         points_A = [point for point in points if point.type == 'Yb']
-        points_B = [point for point in points if point.type == 'Er']
+        points_B = [point for point in points if point.type == 'Tm']
         points_Y = [point for point in self.y_points if point.type == 'Y']
 
         # Extract coordinates and values for points of type A
@@ -186,7 +186,7 @@ class Lattice():
         trace_B = go.Scatter3d(x=x_B, y=y_B, z=z_B, mode='markers+text',
                             marker=dict(size=6, color='pink', opacity=0.8),
                             text=values_B, textposition='top center',
-                            name = 'Er')
+                            name = 'Tm')
         
         trace_Y = go.Scatter3d(x=x_Y, y=y_Y, z=z_Y, mode='markers',
                             marker=dict(size=6, color='gray', opacity=0.8),
@@ -215,7 +215,7 @@ class Lattice():
         points = self.points
         # Separate points based on their type (A or B)
         points_A = [point for point in points if point.type == 'Yb']
-        points_B = [point for point in points if point.type == 'Er']
+        points_B = [point for point in points if point.type == 'Tm']
         points_Y = [point for point in self.y_points if point.type == 'Y']
 
         # Extract coordinates and values for points of type A
@@ -251,7 +251,7 @@ class Lattice():
         trace_B = go.Scatter3d(x=x_B, y=y_B, z=z_B, mode='markers+text',
                             marker=dict(size=6, color='pink', opacity=0.8),
                             text=values_B, textposition='top center',
-                            name = 'Er')
+                            name = 'Tm')
 
         # Combine plots and set layout
         data = [trace_A, trace_B, trace_Y, trace_na]

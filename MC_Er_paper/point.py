@@ -1,5 +1,4 @@
 from utils import to_euclidean, e_distance
-from EnergyTransfer import *
 
 
 class Point():
@@ -16,7 +15,7 @@ class Point():
 
     def to_euclidean(self):
         a, b, c = self.p
-        return (0.596*a+0.5*0.596*b, 3**(1/2)/2*0.596*b, 0.353*c)
+        return (a, b, c)
 
     def to(self, other):
         p1 = self.p
@@ -28,26 +27,35 @@ class Point():
     def deep_copy(self):
         return Point(self.p, self.type, self.state)
     
-    def react(self, other, cross_relaxation, up_conversion, yb_yb, distance):
+    def react(self, other, tag):
         # return rate, new states
         if self.type == 'Yb' and self.state == 1:
             if other.type == 'Yb':
                 if other.state == 0:
-                    return yb_yb / (distance/10**7)**6
+                    return tag['S1S0'], (0, 1)
                 return None
             else:
-                return up_conversion[other.state].total_probability(distance)
-                
-        elif self.type == 'Er' and other.type == 'Er':
-            return cross_relaxation[self.state][other.state].total_probability(distance)
-            
+                if other.state == 0:
+                    return tag['c1'], (0, 1)
+                if other.state == 1:
+                    return tag['c2'], (0, 2)
+                else:
+                    return None
+        elif self.type == 'Tm' and self.state == 1:
+            if other.type == 'Yb':
+                if other.state == 0:
+                    return tag['A1S0'], (0, 1)
+                return None
+            else:
+                if other.state == 0:
+                    return tag['A1A0'], (0, 1)
+                if other.state == 1:
+                    return tag['A1A1'], (0, 2)
+                return None
         return None
     
     def get_decay_rates(self, tag):
-        ret = []
-        for i in range(self.state):
-            ret.append(tag[f'W{self.state}{i}'])
-        return ret
+        return tag[f'W{self.state}0']
 
     def __str__(self):
         return f'{self.p} {self.type} {self.state}'
