@@ -5,7 +5,7 @@ from point import *
 from tqdm import tqdm
 from EnergyTransfer import *
 
-tag_default={'c0':9.836062e-39, # Yb-Yb resonant energy transfer
+tag_default={'c0':9.836062e-40, # Yb-Yb resonant energy transfer
         'Ws':0,
         'W10':88.12753083306136,
         'W21':13.728308752002313,'W20':105.00663885847584,
