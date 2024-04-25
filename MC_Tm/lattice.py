@@ -19,7 +19,7 @@ class Lattice():
     # Some ignored details: probabilistic occupation of nodes, P\bar{6}2m, P\bar{6}, P6_3m
     #    https://www.researchgate.net/profile/Sameera-Perera-2/publication/318604006_Average_and_Local_Crystal_Structure_of_b-ErYbNaYF_4_Upconverting_Nanocrystals_Probed_by_X-ray_Total_Scattering/links/62f94e40b8dc8b4403e1987c/Average-and-Local-Crystal-Structure-of-b-ErYbNaYF-4-Upconverting-Nanocrystals-Probed-by-X-ray-Total-Scattering.pdf
 
-    def __init__(self, yb_conc, tm_conc, d, r, seed = None):
+    def __init__(self, yb_conc, tm_conc, d, r, avg_dist = False, seed = None):
         if seed is not None:
             np.random.seed(seed)
 
@@ -61,6 +61,9 @@ class Lattice():
         self.get_neighbors(r)
         self.excited = [p for p in self.points if p.state != 0]
         self.ground_yb = [p for p in self.points if p.type == 'Yb'  and p.state == 0]
+        self.use_avg_dist = avg_dist
+        if avg_dist:
+            self.get_avg_min_distance()
     
     def get_neighbors(self, r):
         # Get all neighbors (within distance r) of every point 
@@ -75,6 +78,22 @@ class Lattice():
                     i_nei.append((self.points[j], dist))
             ret[self.points[i]] = i_nei
         self.neighbors = ret
+
+    def get_avg_min_distance(self):
+        min_dists = []
+        for i in range(self.n_points):
+            if self.points[i].type == 'Yb':
+                continue
+            min_dist = self.d
+            for j in range(self.n_points):
+                if self.points[j].type == 'Yb':
+                    continue
+                dist = self.points[i].to(self.points[j])
+                if dist > 0 and dist < min_dist:
+                    min_dist = dist
+            min_dists.append(min_dist)
+        print(sum(min_dists), len(min_dists), min_dists)
+        self.min_dist = sum(min_dists) / len(min_dists)
 
     def in_diameter(self, d, points):
         origin = Point((0,0,0))
@@ -268,7 +287,7 @@ class Lattice():
         # ALERT: na_points is not deep copied
 
         # print(np.random.get_state())
-        cp = Lattice(self.yb_conc, self.tm_conc, self.d, self.r)
+        cp = Lattice(self.yb_conc, self.tm_conc, self.d, self.r, avg_dist=self.use_avg_dist)
         cp.yb_conc = self.yb_conc
         cp.tm_conc = self.tm_conc 
         cp.d = self.d
@@ -281,6 +300,8 @@ class Lattice():
         cp.get_neighbors(cp.r)
         cp.excited = [p for p in cp.points if p.state != 0]
         cp.ground_yb = [p for p in cp.points if p.type == 'Yb'  and p.state == 0]
+
+        cp.min_dist = self.min_dist
 
         return cp
     

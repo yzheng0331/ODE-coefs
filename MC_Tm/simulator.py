@@ -59,7 +59,10 @@ class Simulator():
                 pair_rates = []
                 neighbors = self.lattice.neighbors[p]
                 for nei, distance in neighbors:
-                    pair = p.react(nei, self.cross_relaxation, self.up_conversion, self.tag['c0'], distance)
+                    if self.lattice.use_avg_dist:
+                        pair = p.react(nei, self.cross_relaxation, self.up_conversion, self.tag['c0'], self.lattice.min_dist)
+                    else:
+                        pair = p.react(nei, self.cross_relaxation, self.up_conversion, self.tag['c0'], distance)
 
                     if pair is not None:
                         rates.append(pair)
