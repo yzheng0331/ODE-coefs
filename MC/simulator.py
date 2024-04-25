@@ -4,7 +4,7 @@ from lattice import *
 from point import *
 from tqdm import tqdm
 
-tag_default={'c0':7.025758333333333e-39, # Yb-Yb resonant energy transfer
+tag_default={'c0':9.836062e-40, # Yb-Yb resonant energy transfer
              'c1':8.823270689202585e-42,'c2':2.824326729780273e-41,'c3':2.510909737310349e-42,'c4':2.5507997193509964e-43,
              'k31':2.0458454593341336e-41,'k41':7.299896312979955e-41,'k51':1.2897342736133983e-40,
         'Ws':1000,
