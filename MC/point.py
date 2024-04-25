@@ -59,12 +59,12 @@ class Point():
     def get_decay_rates(self, tag):
         ret = []
         for i in range(self.state):
-            if self.state == 2 and i == 1:
-                ret.append(tag[f'W{self.state}{i}'] + tag['MPR21'])
-            elif self.state == 4 and i == 3:
-                ret.append(tag[f'W{self.state}{i}'] + tag['MPR43'])
-            else:
-                ret.append(tag[f'W{self.state}{i}'])
+            # if self.state == 2 and i == 1:
+            #     ret.append(tag[f'W{self.state}{i}'] + tag['MPR21'])
+            # elif self.state == 4 and i == 3:
+            #     ret.append(tag[f'W{self.state}{i}'] + tag['MPR43'])
+            # else:
+            ret.append(tag[f'W{self.state}{i}'])
         return ret
 
     def __str__(self):
